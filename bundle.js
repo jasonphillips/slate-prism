@@ -37009,7 +37009,6 @@ exports.PARENT_TYPE_INVALID = PARENT_TYPE_INVALID;
 
 
 },{}],266:[function(require,module,exports){
-(function (global){
 'use strict';
 
 Object.defineProperty(exports, '__esModule', { value: true });
@@ -37296,243 +37295,8 @@ var MODEL_TYPES = {
 
 };
 
-var global$1 = typeof global !== "undefined" ? global :
-            typeof self !== "undefined" ? self :
-            typeof window !== "undefined" ? window : {}
-
-// shim for using process in browser
-// based off https://github.com/defunctzombie/node-process/blob/master/browser.js
-
-function defaultSetTimout() {
-    throw new Error('setTimeout has not been defined');
-}
-function defaultClearTimeout () {
-    throw new Error('clearTimeout has not been defined');
-}
-var cachedSetTimeout = defaultSetTimout;
-var cachedClearTimeout = defaultClearTimeout;
-if (typeof global$1.setTimeout === 'function') {
-    cachedSetTimeout = setTimeout;
-}
-if (typeof global$1.clearTimeout === 'function') {
-    cachedClearTimeout = clearTimeout;
-}
-
-function runTimeout(fun) {
-    if (cachedSetTimeout === setTimeout) {
-        //normal enviroments in sane situations
-        return setTimeout(fun, 0);
-    }
-    // if setTimeout wasn't available but was latter defined
-    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
-        cachedSetTimeout = setTimeout;
-        return setTimeout(fun, 0);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedSetTimeout(fun, 0);
-    } catch(e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
-            return cachedSetTimeout.call(null, fun, 0);
-        } catch(e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
-            return cachedSetTimeout.call(this, fun, 0);
-        }
-    }
-
-
-}
-function runClearTimeout(marker) {
-    if (cachedClearTimeout === clearTimeout) {
-        //normal enviroments in sane situations
-        return clearTimeout(marker);
-    }
-    // if clearTimeout wasn't available but was latter defined
-    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
-        cachedClearTimeout = clearTimeout;
-        return clearTimeout(marker);
-    }
-    try {
-        // when when somebody has screwed with setTimeout but no I.E. maddness
-        return cachedClearTimeout(marker);
-    } catch (e){
-        try {
-            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
-            return cachedClearTimeout.call(null, marker);
-        } catch (e){
-            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
-            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
-            return cachedClearTimeout.call(this, marker);
-        }
-    }
-
-
-
-}
-var queue = [];
-var draining = false;
-var currentQueue;
-var queueIndex = -1;
-
-function cleanUpNextTick() {
-    if (!draining || !currentQueue) {
-        return;
-    }
-    draining = false;
-    if (currentQueue.length) {
-        queue = currentQueue.concat(queue);
-    } else {
-        queueIndex = -1;
-    }
-    if (queue.length) {
-        drainQueue();
-    }
-}
-
-function drainQueue() {
-    if (draining) {
-        return;
-    }
-    var timeout = runTimeout(cleanUpNextTick);
-    draining = true;
-
-    var len = queue.length;
-    while(len) {
-        currentQueue = queue;
-        queue = [];
-        while (++queueIndex < len) {
-            if (currentQueue) {
-                currentQueue[queueIndex].run();
-            }
-        }
-        queueIndex = -1;
-        len = queue.length;
-    }
-    currentQueue = null;
-    draining = false;
-    runClearTimeout(timeout);
-}
-function nextTick(fun) {
-    var args = new Array(arguments.length - 1);
-    if (arguments.length > 1) {
-        for (var i = 1; i < arguments.length; i++) {
-            args[i - 1] = arguments[i];
-        }
-    }
-    queue.push(new Item(fun, args));
-    if (queue.length === 1 && !draining) {
-        runTimeout(drainQueue);
-    }
-}
-// v8 likes predictible objects
-function Item(fun, array) {
-    this.fun = fun;
-    this.array = array;
-}
-Item.prototype.run = function () {
-    this.fun.apply(null, this.array);
-};
-var title = 'browser';
-var platform = 'browser';
-var browser = true;
-var env = {};
-var argv = [];
-var version = ''; // empty string to avoid regexp issues
-var versions = {};
-var release = {};
-var config = {};
-
-function noop() {}
-
-var on = noop;
-var addListener = noop;
-var once = noop;
-var off = noop;
-var removeListener = noop;
-var removeAllListeners = noop;
-var emit = noop;
-
-function binding(name) {
-    throw new Error('process.binding is not supported');
-}
-
-function cwd () { return '/' }
-function chdir (dir) {
-    throw new Error('process.chdir is not supported');
-}
-function umask() { return 0; }
-
-// from https://github.com/kumavis/browser-process-hrtime/blob/master/index.js
-var performance = global$1.performance || {};
-var performanceNow =
-  performance.now        ||
-  performance.mozNow     ||
-  performance.msNow      ||
-  performance.oNow       ||
-  performance.webkitNow  ||
-  function(){ return (new Date()).getTime() };
-
-// generate timestamp or delta
-// see http://nodejs.org/api/process.html#process_process_hrtime
-function hrtime(previousTimestamp){
-  var clocktime = performanceNow.call(performance)*1e-3;
-  var seconds = Math.floor(clocktime);
-  var nanoseconds = Math.floor((clocktime%1)*1e9);
-  if (previousTimestamp) {
-    seconds = seconds - previousTimestamp[0];
-    nanoseconds = nanoseconds - previousTimestamp[1];
-    if (nanoseconds<0) {
-      seconds--;
-      nanoseconds += 1e9;
-    }
-  }
-  return [seconds,nanoseconds]
-}
-
-var startTime = new Date();
-function uptime() {
-  var currentTime = new Date();
-  var dif = currentTime - startTime;
-  return dif / 1000;
-}
-
-var process = {
-  nextTick: nextTick,
-  title: title,
-  browser: browser,
-  env: env,
-  argv: argv,
-  version: version,
-  versions: versions,
-  on: on,
-  addListener: addListener,
-  once: once,
-  off: off,
-  removeListener: removeListener,
-  removeAllListeners: removeAllListeners,
-  emit: emit,
-  binding: binding,
-  cwd: cwd,
-  chdir: chdir,
-  umask: umask,
-  hrtime: hrtime,
-  platform: platform,
-  release: release,
-  config: config,
-  uptime: uptime
-};
-
 /**
- * Is in development?
- *
- * @type {Boolean}
- */
-
-var IS_DEV = typeof process !== 'undefined' && process.env && "development" !== 'production';
-
-/**
- * GLOBAL: True if memoization should is enabled. Only effective when `IS_DEV`.
+ * GLOBAL: True if memoization should is enabled.
  *
  * @type {Boolean}
  */
@@ -37541,7 +37305,6 @@ var ENABLED = true;
 
 /**
  * GLOBAL: Changing this cache key will clear all previous cached results.
- * Only effective when `IS_DEV`.
  *
  * @type {Number}
  */
@@ -37583,15 +37346,11 @@ var UNSET = undefined;
  */
 
 function memoize(object, properties) {
-  var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
-  var _options$takesArgumen = options.takesArguments,
-      takesArguments = _options$takesArgumen === undefined ? true : _options$takesArgumen;
-
   var _loop = function _loop(property) {
     var original = object[property];
 
     if (!original) {
-      throw new Error('Object does not have a property named "' + property + '".');
+      throw new Error("Object does not have a property named \"" + property + "\".");
     }
 
     object[property] = function () {
@@ -37599,20 +37358,24 @@ function memoize(object, properties) {
         args[_key] = arguments[_key];
       }
 
-      if (IS_DEV) {
-        // If memoization is disabled, call into the original method.
-        if (!ENABLED) return original.apply(this, args);
+      // If memoization is disabled, call into the original method.
+      if (!ENABLED) return original.apply(this, args);
 
-        // If the cache key is different, previous caches must be cleared.
-        if (CACHE_KEY !== this.__cache_key) {
-          this.__cache_key = CACHE_KEY;
-          this.__cache = new Map(); // eslint-disable-line no-undef,no-restricted-globals
-        }
+      // If the cache key is different, previous caches must be cleared.
+      if (CACHE_KEY !== this.__cache_key) {
+        this.__cache_key = CACHE_KEY;
+        this.__cache = new Map(); // eslint-disable-line no-undef,no-restricted-globals
+        this.__cache_no_args = {};
       }
 
       if (!this.__cache) {
         this.__cache = new Map(); // eslint-disable-line no-undef,no-restricted-globals
       }
+      if (!this.__cache_no_args) {
+        this.__cache_no_args = {};
+      }
+
+      var takesArguments = args.length !== 0;
 
       var cachedValue = void 0;
       var keys = void 0;
@@ -37621,7 +37384,7 @@ function memoize(object, properties) {
         keys = [property].concat(args);
         cachedValue = getIn(this.__cache, keys);
       } else {
-        cachedValue = this.__cache.get(property);
+        cachedValue = this.__cache_no_args[property];
       }
 
       // If we've got a result already, return it.
@@ -37636,7 +37399,7 @@ function memoize(object, properties) {
       if (takesArguments) {
         this.__cache = setIn(this.__cache, keys, v);
       } else {
-        this.__cache.set(property, v);
+        this.__cache_no_args[property] = v;
       }
 
       return value;
@@ -37648,7 +37411,6 @@ function memoize(object, properties) {
   var _iteratorError = undefined;
 
   try {
-
     for (var _iterator = properties[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
       var property = _step.value;
 
@@ -38030,9 +37792,7 @@ Mark.prototype[MODEL_TYPES.MARK] = true;
  * Memoize read methods.
  */
 
-memoize(Mark.prototype, ['getComponent'], {
-  takesArguments: true
-});
+memoize(Mark.prototype, ['getComponent']);
 
 /**
  * Default properties.
@@ -39891,6 +39651,20 @@ var Text = function (_Record) {
     value: function validate(schema) {
       return schema.validateNode(this);
     }
+
+    /**
+     * Get the first invalid descendant
+     * PREF: Do not cache this method; because it can cause cycle reference
+     *
+     * @param {Schema} schema
+     * @returns {Text|Null}
+     */
+
+  }, {
+    key: 'getFirstInvalidDescendant',
+    value: function getFirstInvalidDescendant(schema) {
+      return this.validate(schema) ? this : null;
+    }
   }, {
     key: 'object',
 
@@ -40077,9 +39851,7 @@ memoize(Text.prototype, ['getMarks', 'getMarksAsArray'], {
   takesArguments: false
 });
 
-memoize(Text.prototype, ['getDecoratedCharacters', 'getDecorations', 'getLeaves', 'getMarksAtIndex', 'validate'], {
-  takesArguments: true
-});
+memoize(Text.prototype, ['getDecoratedCharacters', 'getDecorations', 'getLeaves', 'getMarksAtIndex', 'validate']);
 
 /**
  * Check if an `index` of a `text` node is in a `range`.
@@ -40886,15 +40658,17 @@ var Node = function () {
         throw new Error('Could not find a descendant node with key "' + key + '".');
       }
 
-      return ancestors
+      var result = ancestors
       // Skip this node...
-      .skipLast()
+      .shift()
       // Take parents until there are more than one child...
       .reverse().takeUntil(function (p) {
         return p.nodes.size > 1;
       })
       // And pick the highest.
       .last();
+      if (!result) return null;
+      return result;
     }
 
     /**
@@ -41165,12 +40939,14 @@ var Node = function () {
     value: function getMarksAtRangeAsArray(range) {
       range = range.normalize(this);
       if (range.isUnset) return [];
-      if (range.isCollapsed) return this.getMarksAtCollaspsedRangeAsArray(range);
+      if (range.isCollapsed) return this.getMarksAtCollapsedRangeAsArray(range);
 
       return this.getCharactersAtRange(range).reduce(function (memo, char) {
-        char.marks.toArray().forEach(function (c) {
-          return memo.push(c);
-        });
+        if (char) {
+          char.marks.toArray().forEach(function (c) {
+            return memo.push(c);
+          });
+        }
         return memo;
       }, []);
     }
@@ -41187,10 +40963,12 @@ var Node = function () {
     value: function getInsertMarksAtRangeAsArray(range) {
       range = range.normalize(this);
       if (range.isUnset) return [];
-      if (range.isCollapsed) return this.getMarksAtCollaspsedRangeAsArray(range);
+      if (range.isCollapsed) return this.getMarksAtCollapsedRangeAsArray(range);
 
       var text = this.getDescendant(range.startKey);
       var char = text.characters.get(range.startOffset);
+      if (!char) return [];
+
       return char.marks.toArray();
     }
 
@@ -41202,8 +40980,8 @@ var Node = function () {
      */
 
   }, {
-    key: 'getMarksAtCollaspsedRangeAsArray',
-    value: function getMarksAtCollaspsedRangeAsArray(range) {
+    key: 'getMarksAtCollapsedRangeAsArray',
+    value: function getMarksAtCollapsedRangeAsArray(range) {
       if (range.isUnset) return [];
 
       var startKey = range.startKey,
@@ -41213,12 +40991,19 @@ var Node = function () {
       if (startOffset == 0) {
         var previous = this.getPreviousText(startKey);
         if (!previous || previous.text.length == 0) return [];
+        if (this.getClosestBlock(startKey) !== this.getClosestBlock(previous.key)) {
+          return [];
+        }
         var _char = previous.characters.get(previous.text.length - 1);
+        if (!_char) return [];
+
         return _char.marks.toArray();
       }
 
       var text = this.getDescendant(startKey);
       var char = text.characters.get(startOffset - 1);
+      if (!char) return [];
+
       return char.marks.toArray();
     }
 
@@ -41234,7 +41019,7 @@ var Node = function () {
     value: function getActiveMarksAtRangeAsArray(range) {
       range = range.normalize(this);
       if (range.isUnset) return [];
-      if (range.isCollapsed) return this.getMarksAtCollaspsedRangeAsArray(range);
+      if (range.isCollapsed) return this.getMarksAtCollapsedRangeAsArray(range);
 
       // Otherwise, get a set of the marks for each character in the range.
       var chars = this.getCharactersAtRange(range);
@@ -41244,7 +41029,8 @@ var Node = function () {
       var memo = first.marks;
 
       chars.slice(1).forEach(function (char) {
-        memo = memo.intersect(char.marks);
+        var marks = char ? char.marks : [];
+        memo = memo.intersect(marks);
         return memo.size != 0;
       });
 
@@ -41841,9 +41627,7 @@ var Node = function () {
   }, {
     key: 'hasVoidParent',
     value: function hasVoidParent(key) {
-      return !!this.getClosest(key, function (parent) {
-        return parent.isVoid;
-      });
+      return !!this.getClosestVoid(key);
     }
 
     /**
@@ -41857,15 +41641,15 @@ var Node = function () {
   }, {
     key: 'insertNode',
     value: function insertNode(index, node) {
-      var keys = this.getKeys();
+      var keys = this.getKeysAsArray();
 
-      if (keys.contains(node.key)) {
+      if (keys.includes(node.key)) {
         node = node.regenerateKey();
       }
 
       if (node.object != 'text') {
         node = node.mapDescendants(function (desc) {
-          return keys.contains(desc.key) ? desc.regenerateKey() : desc;
+          return keys.includes(desc.key) ? desc.regenerateKey() : desc;
         });
       }
 
@@ -42170,6 +41954,24 @@ var Node = function () {
     value: function validate(schema) {
       return schema.validateNode(this);
     }
+
+    /**
+     * Get the first invalid descendant
+     *
+     * @param {Schema} schema
+     * @return {Node|Text|Null}
+     */
+
+  }, {
+    key: 'getFirstInvalidDescendant',
+    value: function getFirstInvalidDescendant(schema) {
+      var result = null;
+      this.nodes.find(function (n) {
+        result = n.validate(schema) ? n : n.getFirstInvalidDescendant(schema);
+        return result;
+      });
+      return result;
+    }
   }], [{
     key: 'create',
 
@@ -42358,13 +42160,7 @@ function assertKey(arg) {
  * Memoize read methods.
  */
 
-memoize(Node.prototype, ['getBlocks', 'getBlocksAsArray', 'getCharacters', 'getCharactersAsArray', 'getFirstText', 'getInlines', 'getInlinesAsArray', 'getKeys', 'getKeysAsArray', 'getLastText', 'getMarks', 'getOrderedMarks', 'getMarksAsArray', 'getText', 'getTextDirection', 'getTexts', 'getTextsAsArray', 'isLeafBlock', 'isLeafInline'], {
-  takesArguments: false
-});
-
-memoize(Node.prototype, ['areDescendantsSorted', 'getActiveMarksAtRange', 'getActiveMarksAtRangeAsArray', 'getAncestors', 'getBlocksAtRange', 'getBlocksAtRangeAsArray', 'getBlocksByType', 'getBlocksByTypeAsArray', 'getCharactersAtRange', 'getCharactersAtRangeAsArray', 'getChild', 'getClosestBlock', 'getClosestInline', 'getClosestVoid', 'getCommonAncestor', 'getDecorations', 'getDepth', 'getDescendant', 'getDescendantAtPath', 'getFragmentAtRange', 'getFurthestBlock', 'getFurthestInline', 'getFurthestAncestor', 'getFurthestOnlyChildAncestor', 'getInlinesAtRange', 'getInlinesAtRangeAsArray', 'getInlinesByType', 'getInlinesByTypeAsArray', 'getMarksAtRange', 'getInsertMarksAtRange', 'getOrderedMarksAtRange', 'getMarksAtRangeAsArray', 'getInsertMarksAtRangeAsArray', 'getMarksByType', 'getOrderedMarksByType', 'getMarksByTypeAsArray', 'getNextBlock', 'getNextSibling', 'getNextText', 'getNode', 'getNodeAtPath', 'getOffset', 'getOffsetAtRange', 'getParent', 'getPath', 'getPlaceholder', 'getPreviousBlock', 'getPreviousSibling', 'getPreviousText', 'getTextAtOffset', 'getTextsAtRange', 'getTextsAtRangeAsArray', 'hasChild', 'hasDescendant', 'hasNode', 'hasVoidParent', 'validate'], {
-  takesArguments: true
-});
+memoize(Node.prototype, ['areDescendantsSorted', 'getActiveMarksAtRangeAsArray', 'getAncestors', 'getBlocksAsArray', 'getBlocksAtRangeAsArray', 'getBlocksByTypeAsArray', 'getCharactersAtRangeAsArray', 'getCharactersAsArray', 'getChild', 'getClosestBlock', 'getClosestInline', 'getClosestVoid', 'getCommonAncestor', 'getDecorations', 'getDepth', 'getDescendant', 'getDescendantAtPath', 'getFirstText', 'getFragmentAtRange', 'getFurthestBlock', 'getFurthestInline', 'getFurthestAncestor', 'getFurthestOnlyChildAncestor', 'getInlinesAsArray', 'getInlinesAtRangeAsArray', 'getInlinesByTypeAsArray', 'getMarksAsArray', 'getMarksAtRangeAsArray', 'getInsertMarksAtRangeAsArray', 'getKeysAsArray', 'getLastText', 'getMarksByTypeAsArray', 'getNextBlock', 'getNextSibling', 'getNextText', 'getNode', 'getNodeAtPath', 'getOffset', 'getOffsetAtRange', 'getParent', 'getPath', 'getPlaceholder', 'getPreviousBlock', 'getPreviousSibling', 'getPreviousText', 'getText', 'getTextAtOffset', 'getTextDirection', 'getTextsAsArray', 'getTextsAtRangeAsArray', 'isLeafBlock', 'isLeafInline', 'validate', 'getFirstInvalidDescendant']);
 
 /**
  * Prevent circular dependencies.
@@ -42464,6 +42260,8 @@ var Inline = function (_Record) {
 
     /**
      * Check if the inline is empty.
+     * Returns true if inline is not void and all it's children nodes are empty.
+     * Void node is never empty, regardless of it's content.
      *
      * @return {Boolean}
      */
@@ -42471,7 +42269,9 @@ var Inline = function (_Record) {
   }, {
     key: 'isEmpty',
     get: function get$$1() {
-      return this.text == '';
+      return !this.isVoid && !this.nodes.some(function (child) {
+        return !child.isEmpty;
+      });
     }
 
     /**
@@ -42720,6 +42520,7 @@ var Document = function (_Record) {
 
     /**
      * Check if the document is empty.
+     * Returns true if all it's children nodes are empty.
      *
      * @return {Boolean}
      */
@@ -42727,7 +42528,9 @@ var Document = function (_Record) {
   }, {
     key: 'isEmpty',
     get: function get$$1() {
-      return this.text == '';
+      return !this.nodes.some(function (child) {
+        return !child.isEmpty;
+      });
     }
 
     /**
@@ -42936,6 +42739,8 @@ var Block = function (_Record) {
 
     /**
      * Check if the block is empty.
+     * Returns true if block is not void and all it's children nodes are empty.
+     * Void node is never empty, regardless of it's content.
      *
      * @return {Boolean}
      */
@@ -42943,7 +42748,9 @@ var Block = function (_Record) {
   }, {
     key: 'isEmpty',
     get: function get$$1() {
-      return this.text == '';
+      return !this.isVoid && !this.nodes.some(function (child) {
+        return !child.isEmpty;
+      });
     }
 
     /**
@@ -43111,7 +42918,7 @@ var Changes = {};
  * they don't have any effect on the selection.
  */
 
-var PROXY_TRANSFORMS = ['deleteBackward', 'deleteCharBackward', 'deleteLineBackward', 'deleteWordBackward', 'deleteForward', 'deleteCharForward', 'deleteWordForward', 'deleteLineForward', 'setBlock', 'setInline', 'splitInline', 'unwrapBlock', 'unwrapInline', 'wrapBlock', 'wrapInline'];
+var PROXY_TRANSFORMS = ['deleteBackward', 'deleteCharBackward', 'deleteLineBackward', 'deleteWordBackward', 'deleteForward', 'deleteCharForward', 'deleteWordForward', 'deleteLineForward', 'setBlocks', 'setInlines', 'splitInline', 'unwrapBlock', 'unwrapInline', 'wrapBlock', 'wrapInline'];
 
 PROXY_TRANSFORMS.forEach(function (method) {
   Changes[method] = function (change) {
@@ -43126,6 +42933,16 @@ PROXY_TRANSFORMS.forEach(function (method) {
     change[methodAtRange].apply(change, [selection].concat(args));
   };
 });
+
+Changes.setBlock = function () {
+  logger.deprecate('slate@0.33.0', 'The `setBlock` method of Slate changes has been renamed to `setBlocks`.');
+  Changes.setBlocks.apply(Changes, arguments);
+};
+
+Changes.setInline = function () {
+  logger.deprecate('slate@0.33.0', 'The `setInline` method of Slate changes has been renamed to `setInlines`.');
+  Changes.setInlines.apply(Changes, arguments);
+};
 
 /**
  * Add a `mark` to the characters in the current selection.
@@ -43881,22 +43698,8 @@ Changes$1.deleteLineBackwardAtRange = function (change, range, options) {
 
   var startBlock = document.getClosestBlock(startKey);
   var offset = startBlock.getOffset(startKey);
-  var startWithVoidInline = startBlock.nodes.size > 1 && startBlock.nodes.get(0).text == '' && startBlock.nodes.get(1).object == 'inline';
-
   var o = offset + startOffset;
-
-  // If line starts with an void inline node, the text node inside this inline
-  // node disturbs the offset. Ignore this inline node and delete it afterwards.
-  if (startWithVoidInline) {
-    o -= 1;
-  }
-
   change.deleteBackwardAtRange(range, o, options);
-
-  // Delete the remaining first inline node if needed.
-  if (startWithVoidInline) {
-    change.deleteBackward();
-  }
 };
 
 /**
@@ -43951,24 +43754,19 @@ Changes$1.deleteBackwardAtRange = function (change, range) {
     return;
   }
 
+  var voidParent = document.getClosestVoid(startKey);
+
+  // If there is a void parent, delete it.
+  if (voidParent) {
+    change.removeNodeByKey(voidParent.key, { normalize: normalize });
+    return;
+  }
+
   var block = document.getClosestBlock(startKey);
 
-  // If the closest block is void, delete it.
-  if (block && block.isVoid) {
-    change.removeNodeByKey(block.key, { normalize: normalize });
-    return;
-  }
-
   // If the closest is not void, but empty, remove it
-  if (block && !block.isVoid && block.isEmpty && document.nodes.size !== 1) {
+  if (block && block.isEmpty && document.nodes.size !== 1) {
     change.removeNodeByKey(block.key, { normalize: normalize });
-    return;
-  }
-
-  // If the closest inline is void, delete it.
-  var inline = document.getClosestInline(startKey);
-  if (inline && inline.isVoid) {
-    change.removeNodeByKey(inline.key, { normalize: normalize });
     return;
   }
 
@@ -43983,17 +43781,11 @@ Changes$1.deleteBackwardAtRange = function (change, range) {
   if (range.isAtStartOf(text)) {
     var prev = document.getPreviousText(text.key);
     var prevBlock = document.getClosestBlock(prev.key);
-    var prevInline = document.getClosestInline(prev.key);
+    var prevVoid = document.getClosestVoid(prev.key);
 
-    // If the previous block is void, remove it.
-    if (prevBlock && prevBlock.isVoid) {
-      change.removeNodeByKey(prevBlock.key, { normalize: normalize });
-      return;
-    }
-
-    // If the previous inline is void, remove it.
-    if (prevInline && prevInline.isVoid) {
-      change.removeNodeByKey(prevInline.key, { normalize: normalize });
+    // If the previous text node has a void parent, remove it.
+    if (prevVoid) {
+      change.removeNodeByKey(prevVoid.key, { normalize: normalize });
       return;
     }
 
@@ -44036,13 +43828,6 @@ Changes$1.deleteBackwardAtRange = function (change, range) {
     } else {
       traversed = next;
     }
-  }
-
-  // If the focus node is inside a void, go up until right after it.
-  if (document.hasVoidParent(node.key)) {
-    var parent = document.getClosestVoid(node.key);
-    node = document.getNextText(parent.key);
-    offset = 0;
   }
 
   range = range.merge({
@@ -44151,28 +43936,23 @@ Changes$1.deleteForwardAtRange = function (change, range) {
     return;
   }
 
-  var block = document.getClosestBlock(startKey);
+  var voidParent = document.getClosestVoid(startKey);
 
-  // If the closest block is void, delete it.
-  if (block && block.isVoid) {
-    change.removeNodeByKey(block.key, { normalize: normalize });
+  // If the node has a void parent, delete it.
+  if (voidParent) {
+    change.removeNodeByKey(voidParent.key, { normalize: normalize });
     return;
   }
 
+  var block = document.getClosestBlock(startKey);
+
   // If the closest is not void, but empty, remove it
-  if (block && !block.isVoid && block.isEmpty && document.nodes.size !== 1) {
+  if (block && block.isEmpty && document.nodes.size !== 1) {
     var nextBlock = document.getNextBlock(block.key);
     change.removeNodeByKey(block.key, { normalize: normalize });
     if (nextBlock && nextBlock.key) {
       change.moveToStartOf(nextBlock);
     }
-    return;
-  }
-
-  // If the closest inline is void, delete it.
-  var inline = document.getClosestInline(startKey);
-  if (inline && inline.isVoid) {
-    change.removeNodeByKey(inline.key, { normalize: normalize });
     return;
   }
 
@@ -44187,17 +43967,11 @@ Changes$1.deleteForwardAtRange = function (change, range) {
   if (range.isAtEndOf(text)) {
     var next = document.getNextText(text.key);
     var _nextBlock = document.getClosestBlock(next.key);
-    var nextInline = document.getClosestInline(next.key);
+    var nextVoid = document.getClosestVoid(next.key);
 
-    // If the previous block is void, remove it.
-    if (_nextBlock && _nextBlock.isVoid) {
-      change.removeNodeByKey(_nextBlock.key, { normalize: normalize });
-      return;
-    }
-
-    // If the previous inline is void, remove it.
-    if (nextInline && nextInline.isVoid) {
-      change.removeNodeByKey(nextInline.key, { normalize: normalize });
+    // If the next text node has a void parent, remove it.
+    if (nextVoid) {
+      change.removeNodeByKey(nextVoid.key, { normalize: normalize });
       return;
     }
 
@@ -44517,8 +44291,17 @@ Changes$1.insertTextAtRange = function (change, range, text, marks) {
   if (normalize !== undefined) {
     normalize = range.isExpanded;
   }
+  change.insertTextByKey(key, offset, text, marks, { normalize: false });
 
-  change.insertTextByKey(key, offset, text, marks, { normalize: normalize });
+  if (normalize) {
+    // normalize in the narrowest existing block that originally contains startKey and endKey
+    var commonAncestor = document.getCommonAncestor(startKey, range.endKey);
+    var ancestors = document.getAncestors(commonAncestor.key).push(commonAncestor);
+    var normalizeAncestor = ancestors.findLast(function (n) {
+      return change.value.document.getDescendant(n.key);
+    });
+    change.normalizeNodeByKey(normalizeAncestor.key);
+  }
 };
 
 /**
@@ -44571,7 +44354,7 @@ Changes$1.removeMarkAtRange = function (change, range, mark) {
  *   @property {Boolean} normalize
  */
 
-Changes$1.setBlockAtRange = function (change, range, properties) {
+Changes$1.setBlocksAtRange = function (change, range, properties) {
   var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
 
   var normalize = change.getFlag('normalize', options);
@@ -44580,9 +44363,32 @@ Changes$1.setBlockAtRange = function (change, range, properties) {
 
   var blocks = document.getBlocksAtRange(range);
 
-  blocks.forEach(function (block) {
+  var startKey = range.startKey,
+      startOffset = range.startOffset,
+      endKey = range.endKey,
+      endOffset = range.endOffset,
+      isCollapsed = range.isCollapsed;
+
+  var isStartVoid = document.hasVoidParent(startKey);
+  var startBlock = document.getClosestBlock(startKey);
+  var endBlock = document.getClosestBlock(endKey);
+
+  // Check if we have a "hanging" selection case where the even though the
+  // selection extends into the start of the end node, we actually want to
+  // ignore that for UX reasons.
+  var isHanging = isCollapsed == false && startOffset == 0 && endOffset == 0 && isStartVoid == false && startKey == startBlock.getFirstText().key && endKey == endBlock.getFirstText().key;
+
+  // If it's a hanging selection, ignore the last block.
+  var sets = isHanging ? blocks.slice(0, -1) : blocks;
+
+  sets.forEach(function (block) {
     change.setNodeByKey(block.key, properties, { normalize: normalize });
   });
+};
+
+Changes$1.setBlockAtRange = function () {
+  logger.deprecate('slate@0.33.0', 'The `setBlockAtRange` method of Slate changes has been renamed to `setBlocksAtRange`.');
+  Changes$1.setBlocksAtRange.apply(Changes$1, arguments);
 };
 
 /**
@@ -44595,7 +44401,7 @@ Changes$1.setBlockAtRange = function (change, range, properties) {
  *   @property {Boolean} normalize
  */
 
-Changes$1.setInlineAtRange = function (change, range, properties) {
+Changes$1.setInlinesAtRange = function (change, range, properties) {
   var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
 
   var normalize = change.getFlag('normalize', options);
@@ -44607,6 +44413,11 @@ Changes$1.setInlineAtRange = function (change, range, properties) {
   inlines.forEach(function (inline) {
     change.setNodeByKey(inline.key, properties, { normalize: normalize });
   });
+};
+
+Changes$1.setInlineAtRange = function () {
+  logger.deprecate('slate@0.33.0', 'The `setInlineAtRange` method of Slate changes has been renamed to `setInlinesAtRange`.');
+  Changes$1.setInlinesAtRange.apply(Changes$1, arguments);
 };
 
 /**
@@ -46261,47 +46072,23 @@ var CORE_SCHEMA_RULES = [
 },
 
 /**
- * Ensure that void nodes contain a text node with a single space of text.
+ * Ensure that inline non-void nodes are never empty.
+ *
+ * This rule is applied to all blocks and inlines, because when they contain an empty
+ * inline, we need to remove the empty inline from that parent node. If `validate`
+ * was to be memoized, it should be against the parent node, not the empty inline itself.
  *
  * @type {Object}
  */
 
 {
   validateNode: function validateNode(node) {
-    if (!node.isVoid) return;
-    if (node.object != 'block' && node.object != 'inline') return;
-    if (node.text == ' ' && node.nodes.size == 1) return;
+    if (node.object != 'inline' && node.object != 'block') return;
 
-    return function (change) {
-      var text = Text.create(' ');
-      var index = node.nodes.size;
-
-      change.insertNodeByKey(node.key, index, text, { normalize: false });
-
-      node.nodes.forEach(function (child) {
-        change.removeNodeByKey(child.key, { normalize: false });
-      });
-    };
-  }
-},
-
-/**
- * Ensure that inline nodes are never empty.
- *
- * This rule is applied to all blocks, because when they contain an empty
- * inline, we need to remove the inline from that parent block. If `validate`
- * was to be memoized, it should be against the parent node, not the inline
- * themselves.
- *
- * @type {Object}
- */
-
-{
-  validateNode: function validateNode(node) {
-    if (node.object != 'block') return;
-    var invalids = node.nodes.filter(function (n) {
-      return n.object == 'inline' && n.text == '';
+    var invalids = node.nodes.filter(function (child) {
+      return child.object === 'inline' && child.isEmpty;
     });
+
     if (!invalids.size) return;
 
     return function (change) {
@@ -46335,7 +46122,9 @@ var CORE_SCHEMA_RULES = [
 
       var prev = index > 0 ? node.nodes.get(index - 1) : null;
       var next = node.nodes.get(index + 1);
-      // We don't test if "prev" is inline, since it has already been processed in the loop
+
+      // We don't test if "prev" is inline, since it has already been
+      // processed in the loop
       var insertBefore = !prev;
       var insertAfter = !next || next.object == 'inline';
 
@@ -46733,9 +46522,7 @@ Stack.prototype[MODEL_TYPES.STACK] = true;
  * Memoize read methods.
  */
 
-memoize(Stack.prototype, ['getPluginsWith'], {
-  takesArguments: true
-});
+memoize(Stack.prototype, ['getPluginsWith']);
 
 /**
  * Debug.
@@ -47371,9 +47158,7 @@ Schema.prototype[MODEL_TYPES.SCHEMA] = true;
  * Memoize read methods.
  */
 
-memoize(Schema.prototype, ['getParentRules'], {
-  takesArguments: true
-});
+memoize(Schema.prototype, ['getParentRules']);
 
 /**
  * Default properties.
@@ -48005,7 +47790,7 @@ var Value = function (_Record) {
     get: function get$$1() {
       if (this.isCollapsed) return true;
       if (this.endOffset != 0 && this.startOffset != 0) return false;
-      return this.fragment.text.length == 0;
+      return this.fragment.isEmpty;
     }
 
     /**
@@ -49361,34 +49146,17 @@ function normalizeNodeAndChildren(change, node, schema) {
     return;
   }
 
-  var normalizedKeys = [];
-  var child = node.nodes.first();
+  var child = node.getFirstInvalidDescendant(schema);
   var path = change.value.document.getPath(node.key);
-
-  // We can't just loop the children and normalize them, because in the process
-  // of normalizing one child, we might end up creating another. Instead, we
-  // have to normalize one at a time, and check for new children along the way.
   while (node && child) {
-    var lastSize = change.operations.size;
     normalizeNodeAndChildren(change, child, schema);
-    normalizedKeys.push(child.key);
-
-    // PERF: if size is unchanged, then no operation happens
-    // Therefore we can simply normalize the next child
-    if (lastSize === change.operations.size) {
-      var nextIndex = node.nodes.indexOf(child) + 1;
-      child = node.nodes.get(nextIndex);
+    node = change.value.document.refindNode(path, node.key);
+    if (!node) {
+      path = [];
+      child = null;
     } else {
-      node = change.value.document.refindNode(path, node.key);
-      if (!node) {
-        path = [];
-        child = null;
-      } else {
-        path = change.value.document.refindPath(path, node.key);
-        child = node.nodes.find(function (c) {
-          return !normalizedKeys.includes(c.key);
-        });
-      }
+      path = change.value.document.refindPath(path, node.key);
+      child = node.getFirstInvalidDescendant(schema);
     }
   }
 
@@ -50312,7 +50080,6 @@ exports.useMemoization = useMemoization;
 exports.default = index;
 
 
-}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 },{"debug":8,"direction":12,"esrever":14,"immutable":41,"is-empty":42,"is-plain-object":46,"lodash/isEqual":416,"lodash/mergeWith":428,"lodash/omit":429,"lodash/pick":430,"slate-dev-logger":218,"slate-schema-violations":265}],267:[function(require,module,exports){
 var getNative = require('./_getNative'),
     root = require('./_root');
